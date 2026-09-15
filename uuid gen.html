@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UUID Generator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #ffffff;
+    color: #111111;
+    padding: 20px 16px 60px;
+    font-size: 14px;
+  }
+  .wrap {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  p.sub {
+    color: #555555;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+  fieldset {
+    border: 1px solid #ccc;
+    padding: 12px 16px 16px;
+    margin-bottom: 16px;
+  }
+  legend {
+    font-weight: bold;
+    padding: 0 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  td {
+    padding: 6px 4px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+  }
+  td:first-child {
+    width: 80px;
+    color: #444;
+  }
+  td.value {
+    font-family: "Courier New", monospace;
+    word-break: break-all;
+  }
+  td.action {
+    width: 70px;
+    text-align: right;
+  }
+  button {
+    cursor: pointer;
+    border: 1px solid #999;
+    background: #f2f2f2;
+    color: #111;
+    border-radius: 3px;
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+  button:hover { background: #e6e6e6; }
+  .main-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .main-actions button {
+    padding: 8px 14px;
+  }
+  select {
+    border: 1px solid #999;
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 13px;
+    background: #fff;
+  }
+  pre#manifest {
+    background: #f7f7f7;
+    border: 1px solid #ccc;
+    padding: 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    overflow-x: auto;
+    color: #222;
+    font-family: "Courier New", monospace;
+  }
+  .section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .hint {
+    font-size: 12.5px;
+    color: #555;
+    margin-top: 8px;
+  }
+  .status {
+    font-size: 12.5px;
+    color: #007a00;
+    height: 16px;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>UUID Generator</h1>
+  <p class="sub">Generate UUID v4 values for manifest.json in a Minecraft Bedrock Addon okay?</p>
+
+  <div class="main-actions">
+    <button onclick="generateAll()">Generate New UUIDs</button>
+    <select id="packType" onchange="updateManifest()">
+      <option value="both">Behavior Pack + Resource Pack</option>
+      <option value="bp">Behavior Pack only</option>
+      <option value="rp">Resource Pack only</option>
+    </select>
+    <span class="status" id="status"></span>
+  </div>
+
+  <fieldset id="bpCard">
+    <legend>Behavior Pack</legend>
+    <table>
+      <tr>
+        <td>Header</td>
+        <td class="value" id="bpHeader"></td>
+        <td class="action"><button onclick="copyText('bpHeader')">Copy</button></td>
+      </tr>
+      <tr>
+        <td>Module</td>
+        <td class="value" id="bpModule"></td>
+        <td class="action"><button onclick="copyText('bpModule')">Copy</button></td>
+      </tr>
+    </table>
+  </fieldset>
+
+  <fieldset id="rpCard">
+    <legend>Resource Pack</legend>
+    <table>
+      <tr>
+        <td>Header</td>
+        <td class="value" id="rpHeader"></td>
+        <td class="action"><button onclick="copyText('rpHeader')">Copy</button></td>
+      </tr>
+      <tr>
+        <td>Module</td>
+        <td class="value" id="rpModule"></td>
+        <td class="action"><button onclick="copyText('rpModule')">Copy</button></td>
+      </tr>
+    </table>
+  </fieldset>
+
+  <fieldset>
+    <div class="section-title-row">
+      <legend style="margin:0;">Sample manifest.json</legend>
+      <button onclick="copyManifest()">Copy All</button>
+    </div>
+    <pre id="manifest"></pre>
+    <p class="hint">Note: im so lazy</p>
+  </fieldset>
+</div>
+
+<script>
+function uuidv4() {
+  return crypto.randomUUID ? crypto.randomUUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
+function generateAll() {
+  document.getElementById('bpHeader').textContent = uuidv4();
+  document.getElementById('bpModule').textContent = uuidv4();
+  document.getElementById('rpHeader').textContent = uuidv4();
+  document.getElementById('rpModule').textContent = uuidv4();
+  updateManifest();
+}
+
+function showStatus(msg) {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  setTimeout(() => { s.textContent = ''; }, 1200);
+}
+
+function copyText(id) {
+  const val = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(val).then(() => showStatus('Copied.'));
+}
+
+function copyManifest() {
+  const val = document.getElementById('manifest').textContent;
+  navigator.clipboard.writeText(val).then(() => showStatus('Manifest copied.'));
+}
+
+function updateManifest() {
+  const type = document.getElementById('packType').value;
+  document.getElementById('bpCard').style.display = (type === 'rp') ? 'none' : 'block';
+  document.getElementById('rpCard').style.display = (type === 'bp') ? 'none' : 'block';
+
+  const bpH = document.getElementById('bpHeader').textContent;
+  const bpM = document.getElementById('bpModule').textContent;
+  const rpH = document.getElementById('rpHeader').textContent;
+  const rpM = document.getElementById('rpModule').textContent;
+
+  let text = '';
+
+  if (type === 'bp' || type === 'both') {
+    text += `// behavior_pack/manifest.json
+{
+  "format_version": 2,
+  "header": {
+    "name": "My Addon (Behavior Pack)",
+    "description": "Your addon description",
+    "uuid": "${bpH}",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]${type === 'both' ? `,
+    "dependencies": [
+      { "uuid": "${rpH}", "version": [1, 0, 0] }
+    ]` : ''}
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "${bpM}",
+      "version": [1, 0, 0]
+    }
+  ]
+}
+`;
+  }
+
+  if (type === 'rp' || type === 'both') {
+    if (type === 'both') text += '\n';
+    text += `// resource_pack/manifest.json
+{
+  "format_version": 2,
+  "header": {
+    "name": "My Addon (Resource Pack)",
+    "description": "Your addon description",
+    "uuid": "${rpH}",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]${type === 'both' ? `,
+    "dependencies": [
+      { "uuid": "${bpH}", "version": [1, 0, 0] }
+    ]` : ''}
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "${rpM}",
+      "version": [1, 0, 0]
+    }
+  ]
+}
+`;
+  }
+
+  document.getElementById('manifest').textContent = text;
+}
+
+generateAll();
+</script>
+</body>
+</html>
